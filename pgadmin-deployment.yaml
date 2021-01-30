@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin-deploy
+  labels:
+    name: pgadmin-deploy
+    app: pgadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: pgadmin-pod
+      app: pgadmin
+
+  template:
+    metadata:
+      name: pgadmin-pod
+      labels:
+        name: pgadmin-pod
+        app: pgadmin
+    spec:
+      initContainers:
+        - name: take-data-dir-ownership
+          image: busybox
+          command:
+            - sh
+            - -c
+            - chown -R 5050:5050 /var/lib/pgadmin
+          securityContext:
+              privileged: true
+          volumeMounts:
+          - name: pgadmin-data
+            mountPath: /var/lib/pgadmin
+      containers:
+        - name: pgadmin
+          image: dpage/pgadmin4
+        # command: ["/bin/chown", "-R", "5050:5050", "/var/lib/pgadmin"]
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              value: "admin@example.com"
+            - name: PGADMIN_DEFAULT_PASSWORD
+              value: "mysecpwd"
+          # envFrom:
+          #   - configMapRef:
+          #       name: pgadmin-config
+          volumeMounts:
+            - name: pgadmin-data
+              mountPath: /var/lib/pgadmin
+              #subPath: postgres
+      volumes:
+      - name: pgadmin-data
+        persistentVolumeClaim:
+          claimName: pgadmin-pv-claim

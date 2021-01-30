@@ -29,9 +29,14 @@ spec:
         - name: https
           containerPort: 443
           protocol: TCP
-      envFrom:
-        - configMapRef:
-            name: pgadmin-config
+      env:
+        - name: PGADMIN_DEFAULT_EMAIL
+          value: "admin@example.com"
+        - name: PGADMIN_DEFAULT_PASSWORD
+          value: "mysecpwd"
+      # envFrom:
+      #   - configMapRef:
+      #       name: pgadmin-config
       volumeMounts:
         - name: pgadmin-data
           mountPath: /var/lib/pgadmin
